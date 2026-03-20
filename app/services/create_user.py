@@ -1,4 +1,4 @@
-from models import User
+from app.models import User
 
 # This function creates a new user with the provided username, email, and password.
 def create_user(username, email, password):

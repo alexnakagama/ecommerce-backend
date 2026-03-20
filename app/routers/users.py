@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
-from services import create_user as create_user_service
-from schemas import UserCreate
+from app.services import create_user as create_user_service
+from app.schemas.user.user_create import UserCreate
 
 # Create a router for user-related endpoints
 router = APIRouter(
