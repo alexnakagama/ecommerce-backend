@@ -14,4 +14,4 @@ router = APIRouter(
 # Endpoint to create a new user
 @router.post("/create-user", summary="Create a new user", status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user_service.create_user(user.username, user.email, user.password, db)
+    return create_user_service.create_user(user.username, user.email, user.password, user.role, db)
