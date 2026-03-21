@@ -1,4 +1,6 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+from app.core.database import get_db
 from app.services import create_user as create_user_service
 from app.schemas.user.user_create import UserCreate
 
@@ -11,5 +13,5 @@ router = APIRouter(
 
 # Endpoint to create a new user
 @router.post("/create-user", summary="Create a new user", status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreate):
-    return create_user_service.create_user(user.username, user.email, user.password)
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    return create_user_service.create_user(user.username, user.email, user.password, db)
