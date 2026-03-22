@@ -1,5 +1,6 @@
 # Security-related functions and utilities
 
+from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import jwt
@@ -19,16 +20,16 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 # This function verifies a password against a hashed password.
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, password_hash: str) -> bool:
+    return pwd_context.verify(plain_password, password_hash)
 
 # This function authenticates a user by verifying the provided password against the stored hashed password.
 def authenticate_user(username: str, password: str, db):
     user = db.query(User).filter(User.username == username).first()
-    if not user:
-        return {"error": "User not found"}
-    if not verify_password(password, user.hashed_password):
-        return {"error": "Invalid password"}
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid username")
+    if not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid password")
     return user
 
 # This function creates a JWT access token for a given user ID.
@@ -38,3 +39,11 @@ def create_access_token(user_data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# This function decodes a JWT token and returns the user data if the token is valid.
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
