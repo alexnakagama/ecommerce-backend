@@ -12,5 +12,5 @@ router = APIRouter(
 
 # Endpoint to create a new product
 @router.post("/add", status_code=status.HTTP_201_CREATED)
-def create_product(name: str, description: str, price: float, db: Session = Depends(get_db)):
+async def create_product(name: str, description: str, price: float, db: Session = Depends(get_db)):
     return create_product_service(name, description, price, db)
