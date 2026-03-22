@@ -1,15 +1,18 @@
 # Security-related functions and utilities
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from jose import jwt
+from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
+
+from sqlalchemy.orm import Session
+from app.core.database import get_db
 from app.models.user_model import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
@@ -24,7 +27,7 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return pwd_context.verify(plain_password, password_hash)
 
 # This function authenticates a user by verifying the provided password against the stored hashed password.
-def authenticate_user(username: str, password: str, db):
+def authenticate_user(username: str, password: str, db: Session):
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid username")
@@ -46,4 +49,16 @@ def decode_access_token(token: str):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+# This function retrieves the current user's information from the JWT token.
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = decode_access_token(token)
+        username = payload.get("sub")
+        role = payload.get("role")
+        if username is None or role is None:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        return {"username": username, "role": role}
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
