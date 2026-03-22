@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from app.core.security import create_access_token, authenticate_user
+from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services import create_user as create_user_service
@@ -12,6 +14,15 @@ router = APIRouter(
 )
 
 # Endpoint to create a new user
-@router.post("/create-user", summary="Create a new user", status_code=status.HTTP_201_CREATED)
+@router.post("/register", summary="Create a new user", status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return create_user_service.create_user(user.username, user.email, user.password, user.role, db)
+
+@router.get("/login", summary="Login a user", status_code=status.HTTP_200_OK)
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(form_data.username, form_data.password, db)
+    if "error" in user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=user["error"])
+    access_token = create_access_token(user_data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+    
