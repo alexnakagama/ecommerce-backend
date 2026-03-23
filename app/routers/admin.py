@@ -9,13 +9,13 @@ from app.schemas.user.user_response import UserResponse
 
 # Create a router for admin-related endpoints
 router = APIRouter(
-    prefix="/admin",
+    prefix="/admin/dashboard",
     tags=["admin"],
     responses={404: {"description": "Not found"}},
 )
 
 # Endpoint to get admin dashboard information
-@router.get("/dashboard", summary="Get admin dashboard information", status_code=status.HTTP_200_OK)
+@router.get("", summary="Get admin dashboard information", status_code=status.HTTP_200_OK)
 async def get_admin_dashboard(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
