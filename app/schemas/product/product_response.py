@@ -6,7 +6,6 @@ class ProductResponse(BaseModel):
     name: str
     description: str
     price: float
-    stock: int
 
     # This allows the model to be created from ORM objects
     class Config:

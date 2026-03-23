@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user_model import User
-from app.routers.users import router as users_router
-from app.routers.products import router as products_router
+from app.services.create_product import create_product as create_product_service
+from app.schemas.product.product_create import ProductCreate
+from app.schemas.user.user_response import UserResponse
 
 # Create a router for admin-related endpoints
 router = APIRouter(
@@ -26,7 +27,7 @@ async def list_users(current_user: dict = Depends(get_current_user), db: Session
     if current_user["role"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     users = db.query(User).all()
-    return {"users": users}
+    return {"users": [UserResponse.model_validate(user) for user in users]}
 
 # Endpoint to get user by ID
 @router.get("/users/{user_id}", summary="Get user by ID", status_code=status.HTTP_200_OK)
@@ -36,7 +37,7 @@ async def get_user_by_id(user_id: int, current_user: dict = Depends(get_current_
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return {"user": user}
+    return {"user": UserResponse.model_validate(user)}
 
 # Endpoint to delete a user by ID
 @router.delete("/users/{user_id}", summary="Delete user by ID", status_code=status.HTTP_200_OK)
@@ -50,3 +51,28 @@ async def delete_user_by_id(user_id: int, current_user: dict = Depends(get_curre
     db.commit()
     db.refresh(user)
     return {"message": "User deleted successfully"}
+
+# Endpoint to update user role (example: promote a user to admin)
+@router.put("/users/{user_id}/role", summary="Update user role", status_code=status.HTTP_200_OK)
+async def update_user_role(user_id: int, new_role: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.role = new_role
+    db.commit()
+    db.refresh(user)
+    return {"message": f"User role updated to {new_role} successfully"}
+
+# Endpoint to create a new product (example: add a new product to the inventory)
+@router.post("/products", summary="Create a new product", status_code=status.HTTP_201_CREATED)
+async def create_product(product_data: ProductCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    name = product_data.name
+    description = product_data.description
+    price = product_data.price
+    if not name or not description or price is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing product data")
+    return create_product_service(name, description, price, db)
