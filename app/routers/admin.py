@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, check_admin
 from app.models.user_model import User
 from app.services.create_product import create_product as create_product_service
 from app.schemas.product.product_create import ProductCreate
 from app.schemas.user.user_response import UserResponse
+from app.schemas.product.product_response import ProductResponse
+from app.models.product_model import Product
 
 # Create a router for admin-related endpoints
 router = APIRouter(
@@ -16,24 +18,18 @@ router = APIRouter(
 
 # Endpoint to get admin dashboard information
 @router.get("", summary="Get admin dashboard information", status_code=status.HTTP_200_OK)
-async def get_admin_dashboard(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+async def get_admin_dashboard(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     return {"message": f"Welcome to the admin dashboard, {current_user['username']}!"}
 
 # Endpoint to manage users (example: list all users)
 @router.get("/users", summary="List all users", status_code=status.HTTP_200_OK)
-async def list_users(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+async def list_users(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return {"users": [UserResponse.model_validate(user) for user in users]}
 
 # Endpoint to get user by ID
 @router.get("/users/{user_id}", summary="Get user by ID", status_code=status.HTTP_200_OK)
-async def get_user_by_id(user_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+async def get_user_by_id(user_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -41,9 +37,7 @@ async def get_user_by_id(user_id: int, current_user: dict = Depends(get_current_
 
 # Endpoint to delete a user by ID
 @router.delete("/users/{user_id}", summary="Delete user by ID", status_code=status.HTTP_200_OK)
-async def delete_user_by_id(user_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+async def delete_user_by_id(user_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -54,9 +48,7 @@ async def delete_user_by_id(user_id: int, current_user: dict = Depends(get_curre
 
 # Endpoint to update user role (example: promote a user to admin)
 @router.put("/users/{user_id}/role", summary="Update user role", status_code=status.HTTP_200_OK)
-async def update_user_role(user_id: int, new_role: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+async def update_user_role(user_id: int, new_role: str, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -66,13 +58,16 @@ async def update_user_role(user_id: int, new_role: str, current_user: dict = Dep
     return {"message": f"User role updated to {new_role} successfully"}
 
 # Endpoint to create a new product (example: add a new product to the inventory)
-@router.post("/products", summary="Create a new product", status_code=status.HTTP_201_CREATED)
-async def create_product(product_data: ProductCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+@router.post("/products/add", summary="Create a new product", status_code=status.HTTP_201_CREATED)
+async def create_product(product_data: ProductCreate, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     name = product_data.name
     description = product_data.description
     price = product_data.price
     if not name or not description or price is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing product data")
     return create_product_service(name, description, price, db)
+
+@router.get("/products", summary="List all products", status_code=status.HTTP_200_OK)
+async def list_products(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return {"products": [ProductResponse.model_validate(product) for product in products]}

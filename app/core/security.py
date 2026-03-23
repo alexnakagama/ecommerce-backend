@@ -1,6 +1,6 @@
 # Security-related functions and utilities
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -30,9 +30,9 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
 def authenticate_user(username: str, password: str, db: Session):
     user = db.query(User).filter(User.username == username).first()
     if user is None:
-        raise HTTPException(status_code=401, detail="Invalid username")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username")
     if not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
     return user
 
 # This function creates a JWT access token for a given user ID.
@@ -48,8 +48,8 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except jwt.JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
 # This function retrieves the current user's information from the JWT token.
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -58,7 +58,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         username = payload.get("sub")
         role = payload.get("role")
         if username is None or role is None:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
         return {"username": username, "role": role}
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+# This function checks if the current user has admin privileges. If not, it raises a 403 Forbidden error.
+def check_admin(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    return current_user

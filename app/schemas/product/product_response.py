@@ -3,6 +3,7 @@ from pydantic import BaseModel
 # This schema is used to define the structure of the response when a product is created or retrieved. 
 # It includes all the fields that are expected in the response.
 class ProductResponse(BaseModel):
+    id: int
     name: str
     description: str
     price: float
