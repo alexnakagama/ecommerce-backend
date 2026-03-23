@@ -4,7 +4,9 @@ from app.core.database import get_db
 from app.core.security import check_admin
 from app.models.user_model import User
 from app.services.create_product import create_product as create_product_service
+from app.services.create_user import create_user as create_user_service
 from app.schemas.product.product_create import ProductCreate
+from app.schemas.user.user_create import UserCreate
 from app.schemas.user.user_response import UserResponse
 from app.schemas.product.product_response import ProductResponse
 from app.models.product_model import Product
@@ -21,6 +23,17 @@ router = APIRouter(
 async def get_admin_dashboard(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     return {"message": f"Welcome to the admin dashboard, {current_user['username']}!"}
 
+# Endpoint to create a user
+@router.post("/users/create", summary="Create a user", status_code=status.HTTP_201_CREATED)
+async def create_user_admin(user_data: UserCreate, current_user = Depends(check_admin), db: Session = Depends(get_db)):
+    username = user_data.username
+    email = user_data.email
+    password = user_data.password
+    role = user_data.role
+    if not username or not email or not password or role is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing product data")
+    return create_user_service(username, email, password, role, db)
+
 # Endpoint to manage users (example: list all users)
 @router.get("/users", summary="List all users", status_code=status.HTTP_200_OK)
 async def list_users(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
@@ -36,7 +49,7 @@ async def get_user_by_id(user_id: int, current_user: dict = Depends(check_admin)
     return {"user": UserResponse.model_validate(user)}
 
 # Endpoint to delete a user by ID
-@router.delete("/users/{user_id}", summary="Delete user by ID", status_code=status.HTTP_200_OK)
+@router.delete("/users/delete/{user_id}", summary="Delete user by ID", status_code=status.HTTP_200_OK)
 async def delete_user_by_id(user_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -80,3 +93,4 @@ async def list_product_by_id(product_id: int, current_user: dict = Depends(check
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product was not found")
     return ProductResponse.model_validate(product)
+

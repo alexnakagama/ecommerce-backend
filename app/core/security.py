@@ -38,6 +38,7 @@ def authenticate_user(username: str, password: str, db: Session):
 # This function creates a JWT access token for a given user ID.
 def create_access_token(user_data: dict):
     to_encode = user_data.copy()
+    to_encode["sub"] = user_data["username"]  # Asegúrate de esto
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

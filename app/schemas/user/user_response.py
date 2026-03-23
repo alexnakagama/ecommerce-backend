@@ -6,6 +6,7 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     username: str
+    role: str
 
     # This allows the model to be created from ORM objects
     class Config:
