@@ -6,3 +6,4 @@ class CartItems(Base):
 
     id = Column(Integer ,primary_key=True)
     cart_id = Column(Integer, ForeignKey("carts.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))

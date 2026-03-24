@@ -2,18 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copia el archivo de dependencias
-COPY pyproject.toml .
+# Copia los archivos de dependencias primero para aprovechar el cache de Docker
+COPY requirements.txt .
 
-# Instala las dependencias directamente desde pyproject.toml
-RUN pip install --upgrade pip && \
-    pip install .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Copia el resto del código
+# Copia el resto del código del proyecto
 COPY . .
 
-# Expone el puerto de FastAPI
 EXPOSE 8000
 
-# Inicia la app con uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
