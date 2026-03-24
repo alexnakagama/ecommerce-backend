@@ -39,7 +39,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 # Endpoint to logout
 @router.post("/logout")
-async def logout(request: Request):
+async def logout(request: Request, current_user: User = Depends(get_current_user)):
     token = request.headers.get("authorization")
     if token and token.startswith("Bearer "):
         token = token.split(" ")[1]
