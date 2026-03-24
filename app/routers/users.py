@@ -1,5 +1,5 @@
-from app.core.security import create_access_token, authenticate_user
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.security import create_access_token, authenticate_user, token_invalidation
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -31,4 +31,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         "role": user.role
     }
     return {"access_token": create_access_token(user_data), "token_type": "bearer"}
-    
+
+# Endpoint to logout
+@router.post("/logout")
+async def logout(request: Request):
+    token = request.headers.get("authorization")
+    if token and token.startswith("Bearer "):
+        token = token.split(" ")[1]
+        token_invalidation(token)
+    return {"message": "Successfully logged out"}

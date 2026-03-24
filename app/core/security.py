@@ -18,6 +18,8 @@ SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+token_blacklist = set()  # Set to store invalidated tokens
+
 # This function hashes the password using bcrypt algorithm.
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -54,6 +56,8 @@ def decode_access_token(token: str):
     
 # This function retrieves the current user's information from the JWT token.
 def get_current_user(token: str = Depends(oauth2_scheme)):
+    if token in token_blacklist:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been invalidated")
     try:
         payload = decode_access_token(token)
         username = payload.get("sub")
@@ -69,3 +73,7 @@ def check_admin(current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return current_user
+
+# This function adds a token to the blacklist, effectively invalidating it.
+def token_invalidation(token: str):
+    token_blacklist.add(token)
