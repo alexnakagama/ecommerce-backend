@@ -62,9 +62,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = decode_access_token(token)
         username = payload.get("sub")
         role = payload.get("role")
-        if username is None or role is None:
+        email = payload.get("email")
+        if username is None or role is None or email is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-        return {"username": username, "role": role}
+        return {"username": username, "role": role, "email": email}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 

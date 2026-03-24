@@ -1,4 +1,4 @@
-from app.core.security import create_access_token, authenticate_user, token_invalidation
+from app.core.security import create_access_token, authenticate_user, token_invalidation, get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -31,6 +31,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         "role": user.role
     }
     return {"access_token": create_access_token(user_data), "token_type": "bearer"}
+
+# Endpoint to get the current user's information
+@router.get("/me", summary="Get current user's information")
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
 
 # Endpoint to logout
 @router.post("/logout")
