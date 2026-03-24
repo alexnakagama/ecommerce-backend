@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services.create_product import create_product as create_product_service
+from app.models.user_model import User
+from app.core.security import get_current_user
 
 # Create a router for product-related endpoints
 router = APIRouter(
@@ -10,7 +12,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Endpoint to create a new product
-@router.post("/add", status_code=status.HTTP_201_CREATED)
-async def create_product(name: str, description: str, price: float, db: Session = Depends(get_db)):
-    return create_product_service(name, description, price, db)
+# Endpoint to do a petition 
+@router.post("", summary="Create a request for a product",status_code=status.HTTP_201_CREATED)
+async def create_request_product():
+    pass

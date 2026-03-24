@@ -48,14 +48,32 @@ async def logout(request: Request, current_user: User = Depends(get_current_user
 # Endpoint to modify my user information
 @router.put("/me/modify", summary="Modify current user's information")
 async def update_user(user: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    pass
+    db_user = db.query(User).filter(User.id == current_user.id).first()
+    if db_user:
+        db_user.username = user.username
+        db_user.email = user.email
+        db.commit()
+        db.refresh(db_user)
+        return {"message": "User information updated successfully"}
+    return {"message": "User not found"}
 
 # Endpoint to change my password
 @router.put("/me/password", summary="Change current user's password")
-async def change_password(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    pass
+async def change_password(user: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_user = db.query(User).filter(User.id == current_user.id).first()
+    if db_user:
+        db_user.password_hash = user.password
+        db.commit()
+        return {"message": "Password changed successfully"}
+    return {"message": "User not found"}
 
 # Endpoint to delete my account
 @router.delete("/me/delete", summary="Delete current user's account")
 async def delete_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    pass
+    db_user = db.query(User).filter(User.id == current_user.id).first()
+    if db_user:
+        db.delete(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return {"message": "User account deleted successfully"}
+    return {"message": "User not found"}
