@@ -8,16 +8,13 @@ from app.core.security import get_current_user
 
 # model imports
 from app.models.user_model import User
-from app.models.product_model import Product
-from app.models.cart_model import Cart
-from app.models.cart_items import CartItems
 
 # schemas imports
 from app.schemas.cart.cart_add_item_request import CartAddItemRequest
-from app.schemas.product.product_response import ProductResponse
 
 # service imports
 from app.services.user.get_user_cart import get_user_cart
+from app.services.cart.add_item_to_cart import add_item_to_cart
 
 # Create a router for cart-related endpoints
 router = APIRouter(
@@ -34,8 +31,7 @@ async def get_cart(db: Session = Depends(get_db), current_user: User = Depends(g
 # Endpoint to add an item to the cart. It expects a request body that matches the CartAddItemRequest schema.
 @router.post("/add", summary="Add item to cart")
 async def add_to_cart(request: CartAddItemRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Placeholder for adding an item to the cart
-    return {"message": "Add item to cart"}
+    return add_item_to_cart(db, user, request)
 
 # Endpoint to remove an item from the cart. 
 # It can be implemented to accept necessary parameters to identify the item to be removed.

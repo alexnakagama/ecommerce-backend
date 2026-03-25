@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User
+from app.models.cart_model import Cart
 
 from app.core.security import hash_password
 
@@ -11,4 +12,7 @@ def create_user(username, email, password, role, db: Session):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    new_cart = Cart(user_id=new_user.id, is_active=True)
+    db.add(new_cart)
+    db.commit()
     return {"message": "User created successfully", "user": new_user}
