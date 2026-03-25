@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 
-from app.services.create_product import create_product as create_product_service
+from app.services.product.create_product import create_product as create_product_service
 
 from app.models.user_model import User
 

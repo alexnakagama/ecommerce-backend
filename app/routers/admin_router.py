@@ -7,11 +7,11 @@ from app.core.security import check_admin
 
 from app.models.user_model import User
 
-from app.services.create_product import create_product as create_product_service
-from app.services.create_user import create_user as create_user_service
-from app.services.get_user_by_id import get_user_by_id as get_user_id
-from app.services.delete_user_by_id import delete_user_by_id as delete_user_id
-from app.services.update_user_role import update_user_role as update_user_role_service
+from app.services.product.create_product import create_product as create_product_service
+from app.services.admin.create_user_admin import create_user_admin as create_user_admin_service
+from app.services.admin.get_user_by_id import get_user_by_id as get_user_id
+from app.services.admin.delete_user_by_id import delete_user_by_id as delete_user_id
+from app.services.admin.update_user_role import update_user_role as update_user_role_service
 
 from app.schemas.product.product_create import ProductCreate
 from app.schemas.user.user_create import UserCreate
@@ -33,14 +33,8 @@ async def get_admin_dashboard(current_user: dict = Depends(check_admin), db: Ses
 
 # Endpoint to create a user
 @router.post("/users/create", summary="Create a user", status_code=status.HTTP_201_CREATED)
-async def create_user_admin(user_data: UserCreate, current_user = Depends(check_admin), db: Session = Depends(get_db)):
-    username = user_data.username
-    email = user_data.email
-    password = user_data.password
-    role = user_data.role
-    if not username or not email or not password or role is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing product data")
-    return create_user_service(username, email, password, role, db)
+async def create_user_admin(user_data: UserCreate, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
+    return create_user_admin_service(db, user_data)
 
 # Endpoint to manage users (example: list all users)
 @router.get("/users", summary="List all users", status_code=status.HTTP_200_OK)

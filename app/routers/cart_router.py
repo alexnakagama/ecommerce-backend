@@ -12,7 +12,7 @@ from app.models.cart_items import CartItems
 from app.schemas.cart.cart_add_item_request import CartAddItemRequest
 from app.schemas.product.product_response import ProductResponse
 
-from app.services.get_user_cart import get_user_cart
+from app.services.user.get_user_cart import get_user_cart
 
 # Create a router for cart-related endpoints
 router = APIRouter(
