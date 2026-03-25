@@ -6,8 +6,11 @@ from app.core.security import get_current_user
 
 from app.models.user_model import User
 from app.models.product_model import Product
+from app.models.cart_model import Cart
+from app.models.cart_items import CartItems
 
 from app.schemas.cart.cart_add_item_request import CartAddItemRequest
+from app.schemas.product.product_response import ProductResponse
 
 # Create a router for cart-related endpoints
 router = APIRouter(
@@ -18,9 +21,17 @@ router = APIRouter(
 
 # Endpoint to get the current users cart
 @router.get("", summary="Get current users cart")
-async def get_cart(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Placeholder for getting the current users cart
-    return {"message": "Get current users cart"}
+async def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    product_list = []
+    db_cart = db.query(Cart).filter(Cart.user_id == current_user.id, Cart.is_active == True).first()
+    if not db_cart:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This cart doesnt exist or is inactive")
+    cart_items = db.query(CartItems).filter(CartItems.cart_id == db_cart.id).all()
+    for item in cart_items:
+        product = db.query(Product).filter(Product.id == item.product_id).first()
+        if product:
+            product_list.append(ProductResponse.model_validate(product))
+    return product_list
 
 # Endpoint to add an item to the cart. It expects a request body that matches the CartAddItemRequest schema.
 @router.post("/add", summary="Add item to cart")

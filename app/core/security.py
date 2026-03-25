@@ -40,7 +40,7 @@ def authenticate_user(username: str, password: str, db: Session):
 # This function creates a JWT access token for a given user ID.
 def create_access_token(user_data: dict):
     to_encode = user_data.copy()
-    to_encode["sub"] = user_data["username"]  # Asegúrate de esto
+    to_encode["sub"] = str(user_data["id"])  # Use user ID as string
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -55,19 +55,13 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
 # This function retrieves the current user's information from the JWT token.
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    if token in token_blacklist:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been invalidated")
-    try:
-        payload = decode_access_token(token)
-        username = payload.get("sub")
-        role = payload.get("role")
-        email = payload.get("email")
-        if username is None or role is None or email is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-        return {"username": username, "role": role, "email": email}
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    payload = decode_access_token(token)
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 # This function checks if the current user has admin privileges. If not, it raises a 403 Forbidden error.
 def check_admin(current_user: dict = Depends(get_current_user)):
