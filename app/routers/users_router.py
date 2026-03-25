@@ -1,19 +1,22 @@
-from app.core.security import create_access_token, authenticate_user, token_invalidation, get_current_user
-
+# enviroment imports
 from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
-
 from sqlalchemy.orm import Session
 
+# core imports
 from app.core.database import get_db
+from app.core.security import create_access_token, authenticate_user, token_invalidation, get_current_user
 
+# model imports
 from app.models.user_model import User
 
+# services imports
 from app.services.user.create_user import create_user as create_user_service
 from app.services.user.update_user import update_user_info
 from app.services.user.delete_user import delete_user as delete_user_service
 from app.services.user.change_pass import change_pass
 
+# schemas imports
 from app.schemas.user.user_register import UserRegister
 from app.schemas.user.user_create import UserCreate
 from app.schemas.user.user_modify import UserModify

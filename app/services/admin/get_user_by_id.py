@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User
+
 from app.schemas.user.user_response import UserResponse
 
 def get_user_by_id(db : Session, user_id : int):    

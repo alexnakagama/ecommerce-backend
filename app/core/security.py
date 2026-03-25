@@ -7,7 +7,9 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
+
 from app.models.user_model import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

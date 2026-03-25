@@ -1,12 +1,15 @@
+# enviroment imports
 from fastapi import APIRouter, Depends, status
-
 from sqlalchemy.orm import Session
 
+# core imports
 from app.core.database import get_db
 from app.core.security import get_current_user
 
+# service imports
 from app.services.product.create_product import create_product as create_product_service
 
+# model imports
 from app.models.user_model import User
 
 # Create a router for product-related endpoints

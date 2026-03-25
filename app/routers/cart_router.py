@@ -1,17 +1,22 @@
+# enviroment imports
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+# core imports
 from app.core.database import get_db
 from app.core.security import get_current_user
 
+# model imports
 from app.models.user_model import User
 from app.models.product_model import Product
 from app.models.cart_model import Cart
 from app.models.cart_items import CartItems
 
+# schemas imports
 from app.schemas.cart.cart_add_item_request import CartAddItemRequest
 from app.schemas.product.product_response import ProductResponse
 
+# service imports
 from app.services.user.get_user_cart import get_user_cart
 
 # Create a router for cart-related endpoints

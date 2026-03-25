@@ -1,13 +1,16 @@
+# enviroment imports
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from sqlalchemy.orm import Session
 
+# core imports
 from app.core.database import get_db
 from app.core.security import check_admin
 
+# model imports
 from app.models.user_model import User
 from app.models.product_model import Product
 
+# services imports
 from app.services.product.create_product import create_product as create_product_service
 from app.services.admin.create_user_admin import create_user_admin as create_user_admin_service
 from app.services.admin.get_user_by_id import get_user_by_id as get_user_id
@@ -16,6 +19,7 @@ from app.services.admin.update_user_role import update_user_role as update_user_
 from app.services.product.get_product_by_id import get_product_by_id
 from app.services.product.get_all_products import get_all_products
 
+# schemas imports
 from app.schemas.product.product_create import ProductCreate
 from app.schemas.user.user_create import UserCreate
 from app.schemas.user.user_response import UserResponse

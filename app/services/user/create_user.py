@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
+
 from app.models.user_model import User
+
 from app.core.security import hash_password
 
 # This function creates a new user with the provided username, email, and password.

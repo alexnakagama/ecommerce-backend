@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.product_model import Product
 
 # This function creates a new product with the provided name, description, and price.
