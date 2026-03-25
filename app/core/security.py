@@ -64,8 +64,8 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     return user
 
 # This function checks if the current user has admin privileges. If not, it raises a 403 Forbidden error.
-def check_admin(current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
+def check_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return current_user
 

@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
 from app.core.security import check_admin
+
 from app.models.user_model import User
+
 from app.services.create_product import create_product as create_product_service
 from app.services.create_user import create_user as create_user_service
+from app.services.get_user_by_id import get_user_by_id as get_user_id
+from app.services.delete_user_by_id import delete_user_by_id as delete_user_id
+
 from app.schemas.product.product_create import ProductCreate
 from app.schemas.user.user_create import UserCreate
 from app.schemas.user.user_response import UserResponse
@@ -21,7 +28,7 @@ router = APIRouter(
 # Endpoint to get admin dashboard information
 @router.get("", summary="Get admin dashboard information", status_code=status.HTTP_200_OK)
 async def get_admin_dashboard(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
-    return {"message": f"Welcome to the admin dashboard, {current_user['username']}!"}
+    return {"message": f"Welcome to the admin dashboard, {current_user.username}!"}
 
 # Endpoint to create a user
 @router.post("/users/create", summary="Create a user", status_code=status.HTTP_201_CREATED)
@@ -36,32 +43,23 @@ async def create_user_admin(user_data: UserCreate, current_user = Depends(check_
 
 # Endpoint to manage users (example: list all users)
 @router.get("/users", summary="List all users", status_code=status.HTTP_200_OK)
-async def list_users(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+async def list_users(current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return {"users": [UserResponse.model_validate(user) for user in users]}
 
 # Endpoint to get user by ID
 @router.get("/users/{user_id}", summary="Get user by ID", status_code=status.HTTP_200_OK)
-async def get_user_by_id(user_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return {"user": UserResponse.model_validate(user)}
+async def get_user_by_id(user_id: int, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
+    return get_user_id(db, user_id)
 
 # Endpoint to delete a user by ID
 @router.delete("/users/delete/{user_id}", summary="Delete user by ID", status_code=status.HTTP_200_OK)
-async def delete_user_by_id(user_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    db.delete(user)
-    db.commit()
-    db.refresh(user)
-    return {"message": "User deleted successfully"}
+async def delete_user_by_id(user_id: int, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
+    return delete_user_id(db, user_id)
 
 # Endpoint to update user role (example: promote a user to admin)
 @router.put("/users/{user_id}/role", summary="Update user role", status_code=status.HTTP_200_OK)
-async def update_user_role(user_id: int, new_role: str, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+async def update_user_role(user_id: int, new_role: str, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -72,7 +70,7 @@ async def update_user_role(user_id: int, new_role: str, current_user: dict = Dep
 
 # Endpoint to create a new product (example: add a new product to the inventory)
 @router.post("/products/add", summary="Create a new product", status_code=status.HTTP_201_CREATED)
-async def create_product(product_data: ProductCreate, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+async def create_product(product_data: ProductCreate, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
     name = product_data.name
     description = product_data.description
     price = product_data.price
@@ -82,13 +80,13 @@ async def create_product(product_data: ProductCreate, current_user: dict = Depen
 
 # Endpoint to list all products
 @router.get("/products", summary="List all products", status_code=status.HTTP_200_OK)
-async def list_products(current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+async def list_products(current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
     products = db.query(Product).all()
     return {"products": [ProductResponse.model_validate(product) for product in products]}
 
 # Endpoint to list a product by ID
 @router.get("/products/{product_id}", summary="List a product by ID", status_code=status.HTTP_200_OK)
-async def list_product_by_id(product_id: int, current_user: dict = Depends(check_admin), db: Session = Depends(get_db)):
+async def list_product_by_id(product_id: int, current_user: User = Depends(check_admin), db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product was not found")
