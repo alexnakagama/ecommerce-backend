@@ -11,9 +11,12 @@ from app.models.user_model import User
 
 from app.services.create_user import create_user as create_user_service
 from app.services.update_user import update_user_info
+from app.services.delete_user import delete_user as delete_user_service
+from app.services.change_pass import change_pass
 
 from app.schemas.user.user_create import UserCreate
 from app.schemas.user.user_modify import UserModify
+from app.schemas.user.change_pass_request import ChangePasswordRequest
 
 # Create a router for user-related endpoints
 router = APIRouter(
@@ -60,21 +63,10 @@ async def update_user(user: UserModify, db: Session = Depends(get_db), current_u
 
 # Endpoint to change my password
 @router.put("/me/password", summary="Change current user's password")
-async def change_password(user: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_user = db.query(User).filter(User.id == current_user.id).first()
-    if db_user:
-        db_user.password_hash = user.password
-        db.commit()
-        return {"message": "Password changed successfully"}
-    return {"message": "User not found"}
+async def change_password(passwords : ChangePasswordRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return change_pass(db, current_user, passwords.old_password, passwords.new_password)
 
 # Endpoint to delete my account
 @router.delete("/me/delete", summary="Delete current user's account")
 async def delete_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_user = db.query(User).filter(User.id == current_user.id).first()
-    if db_user:
-        db.delete(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return {"message": "User account deleted successfully"}
-    return {"message": "User not found"}
+    return delete_user_service(db, current_user.id)
